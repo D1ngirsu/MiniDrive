@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MiniDrive.Identity\MiniDrive.Identity.csproj" />
+    <ProjectReference Include="..\MiniDrive.Files\MiniDrive.Files.csproj" />
+    <ProjectReference Include="..\MiniDrive.Folders\MiniDrive.Folders.csproj" />
+    <ProjectReference Include="..\MiniDrive.Sharing\MiniDrive.Sharing.csproj" />
+    <ProjectReference Include="..\MiniDrive.Storage\MiniDrive.Storage.csproj" />
+    <ProjectReference Include="..\MiniDrive.Audit\MiniDrive.Audit.csproj" />
+    <ProjectReference Include="..\MiniDrive.Quota\MiniDrive.Quota.csproj" />
+    <ProjectReference Include="..\MiniDrive.Common\MiniDrive.Common.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,6 @@
+@MiniDrive.Files.Api_HostAddress = http://localhost:5083
+
+GET {{MiniDrive.Files.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

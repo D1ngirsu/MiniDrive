@@ -1,0 +1,199 @@
+
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: minidrive-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong!Pass123
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - minidrive-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P YourStrong!Pass123 -C -Q "SELECT 1" || exit 1
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: minidrive-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - minidrive-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Identity Service
+  identity-api:
+    build:
+      context: ./src
+      dockerfile: MiniDrive.Identity.Api/Dockerfile
+    container_name: minidrive-identity-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__IdentityDb=Server=sqlserver;Database=MiniDrive_Identity;User Id=sa;Password=YourStrong!Pass123;TrustServerCertificate=True
+      - Redis__ConnectionString=redis:6379,abortConnect=false,connectTimeout=5000
+    ports:
+      - "5001:5001"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - minidrive-network
+    volumes:
+      - ./src/MiniDrive.Identity.Api/appsettings.json:/app/appsettings.json:ro
+
+  # Files Service
+  files-api:
+    build:
+      context: ./src
+      dockerfile: MiniDrive.Files.Api/Dockerfile
+    container_name: minidrive-files-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__FilesDb=Server=sqlserver;Database=MiniDrive_Files;User Id=sa;Password=YourStrong!Pass123;TrustServerCertificate=True
+      - Redis__ConnectionString=redis:6379,abortConnect=false,connectTimeout=5000
+      - Services__Identity=http://identity-api:5001
+      - Services__Quota=http://quota-api:5004
+      - Services__Audit=http://audit-api:5005
+      - Storage__BasePath=/app/storage
+    ports:
+      - "5002:5002"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      identity-api:
+        condition: service_started
+      quota-api:
+        condition: service_started
+      audit-api:
+        condition: service_started
+    networks:
+      - minidrive-network
+    volumes:
+      - ./src/MiniDrive.Files.Api/appsettings.json:/app/appsettings.json:ro
+      - files-storage:/app/storage
+
+  # Folders Service
+  folders-api:
+    build:
+      context: ./src
+      dockerfile: MiniDrive.Folders.Api/Dockerfile
+    container_name: minidrive-folders-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__FoldersDb=Server=sqlserver;Database=MiniDrive_Folders;User Id=sa;Password=YourStrong!Pass123;TrustServerCertificate=True
+      - Redis__ConnectionString=redis:6379,abortConnect=false,connectTimeout=5000
+      - Services__Identity=http://identity-api:5001
+    ports:
+      - "5003:5003"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      identity-api:
+        condition: service_started
+    networks:
+      - minidrive-network
+    volumes:
+      - ./src/MiniDrive.Folders.Api/appsettings.json:/app/appsettings.json:ro
+
+  # Quota Service
+  quota-api:
+    build:
+      context: ./src
+      dockerfile: MiniDrive.Quota.Api/Dockerfile
+    container_name: minidrive-quota-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__QuotaDb=Server=sqlserver;Database=MiniDrive_Quota;User Id=sa;Password=YourStrong!Pass123;TrustServerCertificate=True
+      - Redis__ConnectionString=redis:6379,abortConnect=false,connectTimeout=5000
+    ports:
+      - "5004:5004"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - minidrive-network
+    volumes:
+      - ./src/MiniDrive.Quota.Api/appsettings.json:/app/appsettings.json:ro
+
+  # Audit Service
+  audit-api:
+    build:
+      context: ./src
+      dockerfile: MiniDrive.Audit.Api/Dockerfile
+    container_name: minidrive-audit-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__AuditDb=Server=sqlserver;Database=MiniDrive_Audit;User Id=sa;Password=YourStrong!Pass123;TrustServerCertificate=True
+      - Redis__ConnectionString=redis:6379,abortConnect=false,connectTimeout=5000
+    ports:
+      - "5005:5005"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - minidrive-network
+    volumes:
+      - ./src/MiniDrive.Audit.Api/appsettings.json:/app/appsettings.json:ro
+
+  # API Gateway
+  gateway-api:
+    build:
+      context: ./src
+      dockerfile: MiniDrive.Gateway.Api/Dockerfile
+    container_name: minidrive-gateway-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ReverseProxy__Clusters__identity-cluster__Destinations__destination1__Address=http://identity-api:5001/
+      - ReverseProxy__Clusters__files-cluster__Destinations__destination1__Address=http://files-api:5002/
+      - ReverseProxy__Clusters__folders-cluster__Destinations__destination1__Address=http://folders-api:5003/
+      - ReverseProxy__Clusters__quota-cluster__Destinations__destination1__Address=http://quota-api:5004/
+      - ReverseProxy__Clusters__audit-cluster__Destinations__destination1__Address=http://audit-api:5005/
+    ports:
+      - "5000:5000"
+    depends_on:
+      - identity-api
+      - files-api
+      - folders-api
+      - quota-api
+      - audit-api
+    networks:
+      - minidrive-network
+    volumes:
+      - ./src/MiniDrive.Gateway.Api/appsettings.json:/app/appsettings.json:ro
+
+volumes:
+  sqlserver-data:
+  redis-data:
+  files-storage:
+
+networks:
+  minidrive-network:
+    driver: bridge
+

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MiniDrive.Api/MiniDrive.Api.csproj" />
+    <Project Path="src/MiniDrive.Audit/MiniDrive.Audit.csproj" />
+    <Project Path="src/MiniDrive.Common/MiniDrive.Common.csproj" />
+    <Project Path="src/MiniDrive.Files/MiniDrive.Files.csproj" />
+    <Project Path="src/MiniDrive.Folders/MiniDrive.Folders.csproj" />
+    <Project Path="src/MiniDrive.Identity/MiniDrive.Identity.csproj" />
+    <Project Path="src/MiniDrive.Quota/MiniDrive.Quota.csproj" />
+    <Project Path="src/MiniDrive.Sharing/MiniDrive.Sharing.csproj" />
+    <Project Path="src/MiniDrive.Storage/MiniDrive.Storage.csproj" />
+  </Folder>
+</Solution>
