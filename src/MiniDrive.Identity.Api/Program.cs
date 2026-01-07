@@ -1,5 +1,8 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using MiniDrive.Common.Caching;
 using MiniDrive.Common.Jwt;
 using MiniDrive.Identity;
@@ -19,6 +22,31 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection(JwtOptions.ConfigurationSectionName));
+builder.Services.AddSingleton<JwtTokenGenerator>();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwtOptions = builder.Configuration
+            .GetSection(JwtOptions.ConfigurationSectionName)
+            .Get<JwtOptions>() ?? new JwtOptions();
+
+        if (!jwtOptions.IsValid(out var error))
+        {
+            throw new InvalidOperationException($"Invalid JWT configuration: {error}");
+        }
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
 
 // Identity DI
 builder.Services.AddDbContext<IdentityDbContext>(options =>
@@ -109,6 +137,7 @@ if (!string.IsNullOrEmpty(app.Configuration["ASPNETCORE_HTTPS_PORT"]) ||
     app.UseHttpsRedirection();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Health check endpoint

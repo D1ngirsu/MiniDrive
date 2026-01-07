@@ -33,10 +33,10 @@ public class AuthController : ControllerBase
                 result.User.DisplayName,
                 result.User.CreatedAtUtc
             },
-            session = new
+            token = new
             {
-                result.Session!.Token,
-                result.Session.ExpiresAtUtc
+                accessToken = result.AccessToken,
+                expiresAtUtc = result.Session!.ExpiresAtUtc
             }
         });
     }
@@ -52,8 +52,8 @@ public class AuthController : ControllerBase
 
         return Ok(new
         {
-            token = result.Session!.Token,
-            expiresAtUtc = result.Session.ExpiresAtUtc,
+            token = result.AccessToken,
+            expiresAtUtc = result.Session!.ExpiresAtUtc,
             user = new
             {
                 result.User!.Id,
@@ -97,7 +97,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { error = "Session expired or invalid." });
         }
 
-        await _authServices.LogoutAllAsync(user.Id);
+        await _authServices.LogoutAllAsync(token);
         return NoContent();
     }
 
