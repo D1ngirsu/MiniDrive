@@ -1,0 +1,90 @@
+@baseUrl = http://localhost:5006
+@userId = 550e8400-e29b-41d4-a716-446655440000
+@token = Bearer {{userId}}
+
+### Create a share (user-to-user)
+POST {{baseUrl}}/api/share
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "resourceId": "123e4567-e89b-12d3-a456-426614174000",
+  "resourceType": "file",
+  "sharedWithUserId": "650e8400-e29b-41d4-a716-446655440001",
+  "permission": "view",
+  "notes": "Sharing report with team"
+}
+
+### Create a public share
+POST {{baseUrl}}/api/share
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "resourceId": "123e4567-e89b-12d3-a456-426614174000",
+  "resourceType": "file",
+  "isPublicShare": true,
+  "permission": "view",
+  "maxDownloads": 10,
+  "notes": "Public download link"
+}
+
+### Create a protected public share
+POST {{baseUrl}}/api/share
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "resourceId": "123e4567-e89b-12d3-a456-426614174001",
+  "resourceType": "folder",
+  "isPublicShare": true,
+  "password": "SecurePassword123",
+  "permission": "view",
+  "expiresAtUtc": "2026-12-31T23:59:59Z",
+  "notes": "Protected folder share"
+}
+
+### Get share by ID
+GET {{baseUrl}}/api/share/550e8400-e29b-41d4-a716-446655440000
+Authorization: {{token}}
+
+### Get my shares
+GET {{baseUrl}}/api/share/my-shares
+Authorization: {{token}}
+
+### Get shares shared with me
+GET {{baseUrl}}/api/share/shared-with-me
+Authorization: {{token}}
+
+### Get resource shares
+GET {{baseUrl}}/api/share/resource/123e4567-e89b-12d3-a456-426614174000?resourceType=file
+Authorization: {{token}}
+
+### Get public share
+GET {{baseUrl}}/api/share/public/abcdef1234567890abcdef1234567890
+
+### Access protected share
+POST {{baseUrl}}/api/share/public/abcdef1234567890abcdef1234567890/access
+Content-Type: application/json
+
+{
+  "password": "SecurePassword123"
+}
+
+### Update share
+PUT {{baseUrl}}/api/share/550e8400-e29b-41d4-a716-446655440000
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "permission": "edit",
+  "isActive": true,
+  "expiresAtUtc": "2026-06-30T23:59:59Z"
+}
+
+### Delete share
+DELETE {{baseUrl}}/api/share/550e8400-e29b-41d4-a716-446655440000
+Authorization: {{token}}
+
+### Health check
+GET {{baseUrl}}/health

@@ -106,7 +106,8 @@ app.MapGet("/health/aggregate", async (HttpClient httpClient) =>
         new { Name = "Files", Url = "http://localhost:5002/health" },
         new { Name = "Folders", Url = "http://localhost:5003/health" },
         new { Name = "Quota", Url = "http://localhost:5004/health" },
-        new { Name = "Audit", Url = "http://localhost:5005/health" }
+        new { Name = "Audit", Url = "http://localhost:5005/health" },
+        new { Name = "Sharing", Url = "http://localhost:5006/health" }
     };
 
     var healthChecks = new Dictionary<string, object>();
