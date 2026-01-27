@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MiniDrive.Common;
 using MiniDrive.Common.Caching;
 using MiniDrive.Folders;
 using MiniDrive.Folders.Repositories;
@@ -40,7 +41,8 @@ builder.Services.AddHttpClient<IIdentityClient, IdentityClient>(client =>
 {
     client.BaseAddress = new Uri(identityServiceUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
-});
+})
+.AddDefaultResilience();
 
 var app = builder.Build();
 
