@@ -7,6 +7,28 @@ builder.Services.AddControllers();
 // Add HttpClient for health checks
 builder.Services.AddHttpClient();
 
+// Add CORS with restricted origins
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? (builder.Environment.IsDevelopment() 
+        ? new[] { "http://localhost:3000", "http://localhost:3001" }
+        : new[] { });
+
+if (corsOrigins.Length > 0)
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("RestrictedCors", policy =>
+        {
+            policy
+                .WithOrigins(corsOrigins)
+                .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH")
+                .WithHeaders("Content-Type", "Authorization")
+                .AllowCredentials()
+                .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+        });
+    });
+}
+
 // Add YARP reverse proxy
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
@@ -64,11 +86,11 @@ if (!string.IsNullOrEmpty(app.Configuration["ASPNETCORE_HTTPS_PORT"]) ||
     app.UseHttpsRedirection();
 }
 
-// CORS for API Gateway (if needed)
-app.UseCors(policy => policy
-    .AllowAnyOrigin()
-    .AllowAnyMethod()
-    .AllowAnyHeader());
+// Apply CORS if configured
+if (corsOrigins.Length > 0)
+{
+    app.UseCors("RestrictedCors");
+}
 
 app.UseAuthorization();
 
@@ -84,7 +106,8 @@ app.MapGet("/health/aggregate", async (HttpClient httpClient) =>
         new { Name = "Files", Url = "http://localhost:5002/health" },
         new { Name = "Folders", Url = "http://localhost:5003/health" },
         new { Name = "Quota", Url = "http://localhost:5004/health" },
-        new { Name = "Audit", Url = "http://localhost:5005/health" }
+        new { Name = "Audit", Url = "http://localhost:5005/health" },
+        new { Name = "Sharing", Url = "http://localhost:5006/health" }
     };
 
     var healthChecks = new Dictionary<string, object>();

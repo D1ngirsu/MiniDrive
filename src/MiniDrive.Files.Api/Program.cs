@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MiniDrive.Common;
 using MiniDrive.Common.Caching;
 using MiniDrive.Files;
 using MiniDrive.Files.Repositories;
@@ -61,21 +62,24 @@ builder.Services.AddHttpClient<IIdentityClient, IdentityClient>(client =>
 {
     client.BaseAddress = new Uri(identityServiceUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
-});
+})
+.AddDefaultResilience();
 
 var quotaServiceUrl = builder.Configuration["Services:Quota"] ?? "http://localhost:5004";
 builder.Services.AddHttpClient<IQuotaClient, QuotaClient>(client =>
 {
     client.BaseAddress = new Uri(quotaServiceUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
-});
+})
+.AddDefaultResilience();
 
 var auditServiceUrl = builder.Configuration["Services:Audit"] ?? "http://localhost:5005";
 builder.Services.AddHttpClient<IAuditClient, AuditClient>(client =>
 {
     client.BaseAddress = new Uri(auditServiceUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
-});
+})
+.AddDefaultResilience();
 
 var app = builder.Build();
 

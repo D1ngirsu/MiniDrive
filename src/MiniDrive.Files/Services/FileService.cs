@@ -3,6 +3,7 @@ using MiniDrive.Common;
 using MiniDrive.Files.DTOs;
 using MiniDrive.Files.Entities;
 using MiniDrive.Files.Repositories;
+using MiniDrive.Files.Validators;
 using MiniDrive.Quota.Services;
 using MiniDrive.Storage;
 
@@ -58,7 +59,9 @@ public class FileService
             return Result<FileEntry>.Failure("File stream cannot be null or empty.");
         }
 
-        if (string.IsNullOrWhiteSpace(fileName))
+        // Validate file name for security issues
+        var fileNameValidation = FileNameValidator.ValidateFileName(fileName);
+        if (!fileNameValidation.Succeeded)
         {
             await _auditService.LogActionAsync(
                 ownerId,
@@ -67,10 +70,30 @@ public class FileService
                 Guid.Empty.ToString(),
                 false,
                 $"File: {fileName}",
-                "File name cannot be null or empty.",
+                fileNameValidation.Error,
                 ipAddress,
                 userAgent);
-            return Result<FileEntry>.Failure("File name cannot be null or empty.");
+            return Result<FileEntry>.Failure(fileNameValidation.Error);
+        }
+
+        // Validate description if provided
+        if (!string.IsNullOrWhiteSpace(description))
+        {
+            var descriptionValidation = FileNameValidator.ValidateDescription(description);
+            if (!descriptionValidation.Succeeded)
+            {
+                await _auditService.LogActionAsync(
+                    ownerId,
+                    "FileUpload",
+                    "File",
+                    Guid.Empty.ToString(),
+                    false,
+                    $"File: {fileName}",
+                    descriptionValidation.Error,
+                    ipAddress,
+                    userAgent);
+                return Result<FileEntry>.Failure(descriptionValidation.Error);
+            }
         }
 
         // Check quota before upload
@@ -192,6 +215,16 @@ public class FileService
         Guid? folderId = null,
         string? searchTerm = null)
     {
+        // Validate search term for security issues
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var searchValidation = FileNameValidator.ValidateSearchTerm(searchTerm);
+            if (!searchValidation.Succeeded)
+            {
+                return Result<IReadOnlyCollection<FileEntry>>.Failure(searchValidation.Error);
+            }
+        }
+
         IReadOnlyCollection<FileEntry> files;
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
