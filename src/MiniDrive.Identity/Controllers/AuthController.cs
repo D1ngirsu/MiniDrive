@@ -8,17 +8,17 @@ namespace MiniDrive.Identity.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthService _authServices;
+    private readonly IAuthService _authService;
 
-    public AuthController(IAuthService authServices)
+    public AuthController(IAuthService authService)
     {
-        _authServices = authServices;
+        _authService = authService;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var result = await _authServices.RegisterAsync(request, GetUserAgent(), GetClientIp());
+        var result = await _authService.RegisterAsync(request, GetUserAgent(), GetClientIp());
         if (!result.Succeeded)
         {
             return BadRequest(new { error = result.Error });
@@ -44,7 +44,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var result = await _authServices.LoginAsync(request, GetUserAgent(), GetClientIp());
+        var result = await _authService.LoginAsync(request, GetUserAgent(), GetClientIp());
         if (!result.Succeeded)
         {
             return Unauthorized(new { error = result.Error });
@@ -73,7 +73,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { error = "Missing or invalid Authorization header." });
         }
 
-        var removed = await _authServices.LogoutAsync(token);
+        var removed = await _authService.LogoutAsync(token);
         if (!removed)
         {
             return NotFound(new { error = "Session not found or already expired." });
@@ -91,13 +91,13 @@ public class AuthController : ControllerBase
             return Unauthorized(new { error = "Missing or invalid Authorization header." });
         }
 
-        var user = await _authServices.ValidateSessionAsync(token);
+        var user = await _authService.ValidateSessionAsync(token);
         if (user is null)
         {
             return Unauthorized(new { error = "Session expired or invalid." });
         }
 
-        await _authServices.LogoutAllAsync(token);
+        await _authService.LogoutAllAsync(token);
         return NoContent();
     }
 
@@ -110,7 +110,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { error = "Missing or invalid Authorization header." });
         }
 
-        var user = await _authServices.ValidateSessionAsync(token);
+        var user = await _authService.ValidateSessionAsync(token);
         if (user is null)
         {
             return Unauthorized(new { error = "Session expired or invalid." });

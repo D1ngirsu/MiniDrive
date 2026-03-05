@@ -56,6 +56,7 @@ builder.Services.AddDbContext<IdentityDbContext>(options =>
     }
 });
 builder.Services.AddScoped<UserRepository>();
+builder.Services.AddSingleton<JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Files DI
