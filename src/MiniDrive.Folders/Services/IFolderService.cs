@@ -34,7 +34,7 @@ public interface IFolderService
     /// <summary>
     /// Lists folders for a user with pagination support, optionally filtered by parent.
     /// </summary>
-    Task<Result<IReadOnlyCollection<Folder>>> ListFoldersAsync(
+    Task<Result<PagedResult<Folder>>> ListFoldersAsync(
         Guid ownerId,
         Guid? parentFolderId,
         string? searchTerm,
