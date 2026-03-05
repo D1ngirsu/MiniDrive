@@ -35,7 +35,7 @@ builder.Services.AddDbContext<SharingDbContext>(options =>
 });
 
 builder.Services.AddScoped<ShareRepository>();
-builder.Services.AddScoped<ShareService>();
+builder.Services.AddScoped<IShareService, ShareService>();
 
 // Microservice clients
 var identityServiceUrl = builder.Configuration["Services:Identity"] ?? "http://localhost:5001";
