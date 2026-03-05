@@ -40,6 +40,15 @@ public interface IFileService
         string? searchTerm = null);
 
     /// <summary>
+    /// Lists files for a user with pagination, optionally filtered by folder.
+    /// </summary>
+    Task<Result<PagedResult<FileEntry>>> ListFilesAsync(
+        Guid ownerId,
+        Guid? folderId,
+        string? searchTerm,
+        Pagination pagination);
+
+    /// <summary>
     /// Deletes a file (soft delete).
     /// </summary>
     Task<Result> DeleteFileAsync(
