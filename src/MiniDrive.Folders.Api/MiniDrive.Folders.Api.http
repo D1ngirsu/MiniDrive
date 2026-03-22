@@ -1,6 +1,6 @@
-@MiniDrive.Folders.Api_HostAddress = http://localhost:5134
+@MiniDrive_Folders_Api_HostAddress = http://localhost:5134
 
-GET {{MiniDrive.Folders.Api_HostAddress}}/weatherforecast/
+GET {{MiniDrive_Folders_Api_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
