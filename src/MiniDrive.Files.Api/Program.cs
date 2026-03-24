@@ -57,6 +57,7 @@ builder.Services.AddScoped<MiniDrive.Quota.Services.IQuotaService, MiniDrive.Fil
 builder.Services.AddScoped<MiniDrive.Audit.Services.IAuditService, MiniDrive.Files.Api.Adapters.AuditServiceAdapter>();
 
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IFilePreviewService, FilePreviewService>();
 
 // Microservice clients
 builder.Services.AddCachedIdentityClient(builder.Configuration);
@@ -103,7 +104,7 @@ if (!app.Environment.IsEnvironment("Testing"))
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    
+
     // Add Swagger UI endpoint
     app.MapGet("/swagger", () => Results.Content("""
     <!DOCTYPE html>
@@ -144,7 +145,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Only use HTTPS redirection if HTTPS is configured
-if (!string.IsNullOrEmpty(app.Configuration["ASPNETCORE_HTTPS_PORT"]) || 
+if (!string.IsNullOrEmpty(app.Configuration["ASPNETCORE_HTTPS_PORT"]) ||
     app.Configuration["ASPNETCORE_URLS"]?.Contains("https://") == true)
 {
     app.UseHttpsRedirection();

@@ -1,4 +1,5 @@
 using MiniDrive.Common;
+using MiniDrive.Files.DTOs;
 using MiniDrive.Files.Entities;
 
 namespace MiniDrive.Files.Services;
@@ -80,4 +81,13 @@ public interface IFileService
     /// Gets total storage used by a user.
     /// </summary>
     Task<long> GetTotalStorageUsedAsync(Guid ownerId);
+
+    /// <summary>
+    /// Gets a preview of a file.
+    /// </summary>
+    Task<Result<FilePreviewResponse>> GetFilePreviewAsync(
+        Guid fileId,
+        Guid ownerId,
+        int maxPreviewSize = 100 * 1024,
+        bool includeContent = true);
 }

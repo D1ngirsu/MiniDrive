@@ -134,7 +134,7 @@ public class FileController : ControllerBase
 
         var pagedResult = result.Value!;
         var files = pagedResult.Items.Select(MapToResponse).ToList();
-        
+
         return Ok(new
         {
             data = files,
@@ -232,6 +232,31 @@ public class FileController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// Gets a preview of a file by ID.
+    /// </summary>
+    [HttpGet("{id}/preview")]
+    public async Task<IActionResult> GetFilePreview(
+        Guid id,
+        [FromQuery] bool includeContent = true,
+        [FromQuery] int maxPreviewSize = 100 * 1024,
+        [FromHeader(Name = "Authorization")] string? authorization = null)
+    {
+        var userId = await GetUserIdAsync(authorization);
+        if (userId == null)
+        {
+            return Unauthorized(new { error = "Invalid or missing authorization token." });
+        }
+
+        var result = await _fileService.GetFilePreviewAsync(id, userId.Value, maxPreviewSize, includeContent);
+        if (!result.Succeeded)
+        {
+            return NotFound(new { error = result.Error });
+        }
+
+        return Ok(result.Value);
     }
 
     /// <summary>

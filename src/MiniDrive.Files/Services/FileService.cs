@@ -18,17 +18,20 @@ public class FileService : IFileService
     private readonly IFileStorage _fileStorage;
     private readonly IQuotaService _quotaService;
     private readonly IAuditService _auditService;
+    private readonly IFilePreviewService _filePreviewService;
 
     public FileService(
         FileRepository fileRepository,
         IFileStorage fileStorage,
         IQuotaService quotaService,
-        IAuditService auditService)
+        IAuditService auditService,
+        IFilePreviewService filePreviewService)
     {
         _fileRepository = fileRepository;
         _fileStorage = fileStorage;
         _quotaService = quotaService;
         _auditService = auditService;
+        _filePreviewService = filePreviewService;
     }
 
     /// <summary>
@@ -462,5 +465,27 @@ public class FileService : IFileService
     public async Task<long> GetTotalStorageUsedAsync(Guid ownerId)
     {
         return await _fileRepository.GetTotalSizeByOwnerAsync(ownerId);
+    }
+
+    /// <summary>
+    /// Gets a preview of a file.
+    /// </summary>
+    public async Task<Result<FilePreviewResponse>> GetFilePreviewAsync(
+        Guid fileId,
+        Guid ownerId,
+        int maxPreviewSize = 100 * 1024,
+        bool includeContent = true)
+    {
+        // Get file and verify ownership
+        var file = await _fileRepository.GetByIdAndOwnerAsync(fileId, ownerId);
+        if (file == null)
+        {
+            return Result<FilePreviewResponse>.Failure("File not found or access denied.");
+        }
+
+        // Generate preview
+        var preview = await _filePreviewService.GetPreviewAsync(file, maxPreviewSize, includeContent);
+
+        return Result<FilePreviewResponse>.Success(preview);
     }
 }
