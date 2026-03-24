@@ -1,5 +1,3 @@
-
-
 services:
   # SQL Server Database
   sqlserver:
@@ -33,7 +31,7 @@ services:
     networks:
       - minidrive-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -162,6 +160,31 @@ services:
     volumes:
       - ./src/MiniDrive.Audit.Api/appsettings.json:/app/appsettings.json:ro
 
+  # Sharing Service
+  sharing-api:
+    build:
+      context: ./src
+      dockerfile: MiniDrive.Sharing.Api/Dockerfile
+    container_name: minidrive-sharing-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__SharingDb=Server=sqlserver;Database=MiniDrive_Sharing;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Pass123};TrustServerCertificate=True
+      - Redis__ConnectionString=redis:6379,abortConnect=false,connectTimeout=5000
+      - Services__Identity=http://identity-api:5001
+    ports:
+      - "5006:5006"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      identity-api:
+        condition: service_started
+    networks:
+      - minidrive-network
+    volumes:
+      - ./src/MiniDrive.Sharing.Api/appsettings.json:/app/appsettings.json:ro
+
   # API Gateway
   gateway-api:
     build:
@@ -175,6 +198,7 @@ services:
       - ReverseProxy__Clusters__folders-cluster__Destinations__destination1__Address=http://folders-api:5003/
       - ReverseProxy__Clusters__quota-cluster__Destinations__destination1__Address=http://quota-api:5004/
       - ReverseProxy__Clusters__audit-cluster__Destinations__destination1__Address=http://audit-api:5005/
+      - ReverseProxy__Clusters__sharing-cluster__Destinations__destination1__Address=http://sharing-api:5006/
     ports:
       - "5000:5000"
     depends_on:
@@ -183,6 +207,7 @@ services:
       - folders-api
       - quota-api
       - audit-api
+      - sharing-api
     networks:
       - minidrive-network
     volumes:
@@ -193,7 +218,7 @@ volumes:
   redis-data:
   files-storage:
 
+
 networks:
   minidrive-network:
     driver: bridge
-
