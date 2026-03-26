@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using AspNetMediaTypeHeaderValue = Microsoft.Net.Http.Headers.MediaTypeHeaderValue;
 using MiniDrive.Common;
 using MiniDrive.Files.DTOs;
 using MiniDrive.Files.Services;
@@ -82,7 +83,10 @@ public class FileController : ControllerBase
         }
 
         var (file, stream) = result.Value!;
-        return File(stream, file.ContentType, file.FileName);
+        var downloadContentType = ResolveDownloadContentType(file.ContentType);
+        var downloadFileName = ResolveDownloadFileName(file.FileName, id);
+
+        return File(stream, downloadContentType, downloadFileName);
     }
 
     /// <summary>
@@ -330,6 +334,37 @@ public class FileController : ControllerBase
             len /= 1024;
         }
         return $"{len:0.##} {sizes[order]}";
+    }
+
+    private static string ResolveDownloadContentType(string? contentType)
+    {
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            return "application/octet-stream";
+        }
+
+        var normalized = contentType.Trim();
+        return AspNetMediaTypeHeaderValue.TryParse(normalized, out var parsed) && !string.IsNullOrWhiteSpace(parsed.MediaType.Value)
+            ? parsed.ToString()
+            : "application/octet-stream";
+    }
+
+    private static string ResolveDownloadFileName(string? fileName, Guid fileId)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return $"file-{fileId:N}";
+        }
+
+        var safeFileName = Path.GetFileName(fileName)
+            .Replace("\r", string.Empty)
+            .Replace("\n", string.Empty)
+            .Replace("\0", string.Empty)
+            .Trim();
+
+        return string.IsNullOrWhiteSpace(safeFileName)
+            ? $"file-{fileId:N}"
+            : safeFileName;
     }
 
     private string? GetClientIpAddress()

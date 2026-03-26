@@ -6,6 +6,7 @@ using MiniDrive.Files.Repositories;
 using MiniDrive.Files.Validators;
 using MiniDrive.Quota.Services;
 using MiniDrive.Storage;
+using AspNetMediaTypeHeaderValue = Microsoft.Net.Http.Headers.MediaTypeHeaderValue;
 
 namespace MiniDrive.Files.Services;
 
@@ -47,6 +48,8 @@ public class FileService : IFileService
         string? ipAddress = null,
         string? userAgent = null)
     {
+        var normalizedContentType = NormalizeContentType(contentType);
+
         if (fileStream == null || fileStream.Length == 0)
         {
             await _auditService.LogActionAsync(
@@ -130,7 +133,7 @@ public class FileService : IFileService
             var fileEntry = new FileEntry
             {
                 FileName = fileName,
-                ContentType = contentType,
+                ContentType = normalizedContentType,
                 SizeBytes = fileStream.Length,
                 StoragePath = storagePath,
                 OwnerId = ownerId,
@@ -151,7 +154,7 @@ public class FileService : IFileService
                 "File",
                 fileEntry.Id.ToString(),
                 true,
-                $"File: {fileName}, Size: {fileStream.Length} bytes, ContentType: {contentType}",
+                $"File: {fileName}, Size: {fileStream.Length} bytes, ContentType: {normalizedContentType}",
                 null,
                 ipAddress,
                 userAgent);
@@ -487,5 +490,18 @@ public class FileService : IFileService
         var preview = await _filePreviewService.GetPreviewAsync(file, maxPreviewSize, includeContent);
 
         return Result<FilePreviewResponse>.Success(preview);
+    }
+
+    private static string NormalizeContentType(string? contentType)
+    {
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            return "application/octet-stream";
+        }
+
+        var normalized = contentType.Trim();
+        return AspNetMediaTypeHeaderValue.TryParse(normalized, out var parsed) && !string.IsNullOrWhiteSpace(parsed.MediaType.Value)
+            ? parsed.ToString()
+            : "application/octet-stream";
     }
 }
