@@ -1,11 +1,14 @@
 using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 #nullable disable
 
 namespace MiniDrive.Sharing.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(global::MiniDrive.Sharing.SharingDbContext))]
+    [Migration("20260127000000_InitialCreate")]
     public partial class InitialCreate : Migration
     {
         /// <inheritdoc />

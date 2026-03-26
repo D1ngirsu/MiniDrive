@@ -1,0 +1,19 @@
+# Example override file for local development
+# Copy this to docker-compose.override.yml and customize as needed
+# docker-compose.override.yml is automatically loaded by docker-compose
+
+version: '3.8'
+
+services:
+  # Override environment variables for local development
+  identity-api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Add custom environment variables here
+
+  # Mount source code for hot reload (requires volume mounts)
+  # Uncomment to enable live code reloading during development
+  # files-api:
+  #   volumes:
+  #     - ./src:/src:ro
+
